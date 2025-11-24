@@ -1,0 +1,29 @@
+# Input data
+starred.csv
+
+# Downloaded READMEs
+readmes/
+
+# Analysis outputs
+analyzed_repos.json
+analysis_cache.json
+dashboard.html
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

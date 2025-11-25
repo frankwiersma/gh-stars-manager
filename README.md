@@ -49,42 +49,51 @@ ollama list
 
 ## Quick Start
 
-### 1. Export Your Starred Repos
-
-```powershell
-# PowerShell
-gh api '/user/starred' --paginate --jq '.[] | [.full_name, .stargazers_count, .language] | @csv' `
-    | Out-File starred.csv -Encoding UTF8
-```
+### One-Command Pipeline (Recommended)
 
 ```bash
-# Bash/Zsh
-gh api '/user/starred' --paginate --jq '.[] | [.full_name, .stargazers_count, .language] | @csv' > starred.csv
+python run.py
 ```
 
-### 2. Fetch All READMEs
+This runs the complete pipeline:
+1. ✅ Fetches your latest starred repos from GitHub
+2. ✅ Downloads READMEs (only new ones, incremental)
+3. ✅ Analyzes with LLM (only new repos, uses cache)
+4. ✅ Generates the interactive dashboard
+
+**Incremental Updates**: Run `python run.py` anytime to pick up newly starred repos. Only new repos are processed - everything else uses the cache!
+
+### Manual Step-by-Step (Optional)
+
+If you prefer to run steps individually:
+
+#### 1. Fetch Starred Repos & READMEs
 
 ```bash
 python fetch_readmes.py
 ```
 
-This downloads README files from all starred repos into the `readmes/` folder.
+- Automatically fetches your starred repos from GitHub API
+- Creates/updates `starred.csv` with repo metadata
+- Downloads README files (only new ones)
+- Fully incremental - safe to run anytime
 
-### 3. Analyze with LLM
+#### 2. Analyze with LLM
 
 ```bash
 # Make sure Ollama is running:
 ollama serve
 
+# Configure model in analyze_readmes.py (edit MODEL variable)
 # Then run analysis:
 python analyze_readmes.py
 ```
 
-This analyzes each README with the LLM and creates `analyzed_repos.json`.
+This analyzes each README and creates `analyzed_repos.json`.
 
-**Note**: Configure which model to use by editing `MODEL` variable in `analyze_readmes.py`. First run takes time (time varies by model). Results are cached - subsequent runs only analyze new/changed READMEs.
+**Note**: First run takes time (varies by model). Results are cached - subsequent runs only analyze new/changed READMEs.
 
-### 4. Generate Dashboard
+#### 3. Generate Dashboard
 
 ```bash
 python generate_dashboard.py
@@ -96,15 +105,17 @@ Open `dashboard.html` in your browser!
 
 ```
 gh-stars-manager/
-├── starred.csv              # Your starred repos (input)
-├── fetch_readmes.py         # Fetches README files
-├── analyze_readmes.py       # LLM analysis with Qwen2.5
+├── run.py                   # 🚀 Main pipeline runner (run this!)
+├── fetch_readmes.py         # Fetches starred repos & READMEs (incremental)
+├── analyze_readmes.py       # LLM analysis (incremental, cached)
 ├── generate_dashboard.py    # Creates HTML dashboard
-├── analyzed_repos.json      # Analysis results
-├── analysis_cache.json      # Cache for incremental updates
-├── dashboard.html           # Interactive dashboard
+├── test_ollama.py           # Test Ollama connection
+├── starred.csv              # Cached repo metadata (auto-generated)
+├── analyzed_repos.json      # Analysis results (auto-generated)
+├── analysis_cache.json      # LLM analysis cache (auto-generated)
+├── dashboard.html           # Interactive dashboard (auto-generated)
 ├── README.md                # This file
-└── readmes/                 # Downloaded README files
+└── readmes/                 # Downloaded README files (auto-generated)
     ├── owner1_repo1.md
     ├── owner2_repo2.md
     └── _failed_repos.txt
@@ -231,12 +242,39 @@ ollama pull <model-name>
 - Failed repos are logged in `readmes/_failed_repos.txt`
 - These repos get minimal metadata from CSV
 
+## Incremental Workflow
+
+The system is designed for frequent updates:
+
+- **First Run**: Processes all ~900 starred repos (takes time)
+- **Subsequent Runs**: Only processes new stars (fast! ⚡)
+- **Smart Caching**: Everything uses caching at every level:
+  - `starred.csv` - GitHub API cache
+  - `readmes/` - Downloaded README cache
+  - `analysis_cache.json` - LLM analysis cache
+
+**Example workflow:**
+```bash
+# Today: Analyze all 900 repos (takes hours)
+python run.py
+
+# Tomorrow: Star 5 new repos
+# Run again - only processes those 5 new repos! (takes minutes)
+python run.py
+
+# Next week: Star 10 more repos
+# Run again - only processes those 10 (fast!)
+python run.py
+```
+
 ## Tips
 
-1. **Incremental Updates**: Run the full pipeline periodically to pick up new stars
-2. **Re-analyze**: Delete `analysis_cache.json` to force fresh LLM analysis
-3. **Model Selection**: Choose faster models (7-8B params) for speed or larger models (30B+) for better analysis quality
-4. **Offline Dashboard**: The HTML dashboard is fully self-contained and works without internet
+1. **Daily/Weekly Updates**: Run `python run.py` regularly to stay up to date
+2. **Force Re-analysis**: Delete `analysis_cache.json` to re-analyze all repos
+3. **Fresh Start**: Delete `starred.csv`, `readmes/`, and `analysis_cache.json` to start from scratch
+4. **Model Selection**: Choose faster models (7-8B params) for speed or larger models (30B+) for better analysis quality
+5. **Offline Dashboard**: The HTML dashboard is fully self-contained and works without internet
+6. **Test Ollama**: Run `python test_ollama.py` if you have connection issues
 
 ## Model Recommendations
 

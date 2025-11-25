@@ -6,6 +6,12 @@ An intelligent dashboard for managing, analyzing, and discovering patterns in yo
 ![Python](https://img.shields.io/badge/Python-3.8+-blue)
 ![LLM](https://img.shields.io/badge/LLM-Ollama-purple)
 
+## Preview
+
+![Dashboard Screenshot](docs/dashboard-screenshot.png)
+
+*Interactive dashboard with hierarchical taxonomy, fuzzy search, tag filtering, and rich metadata display*
+
 ## Features
 
 ### Smart Analysis
